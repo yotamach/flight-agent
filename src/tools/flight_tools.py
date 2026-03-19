@@ -1,6 +1,7 @@
 """Flight tool definitions for Claude."""
 
 from ..services.flight_service import FlightService
+from ..services import airport_store
 
 # Tool definitions for Claude
 FLIGHT_TOOLS = [
@@ -27,8 +28,8 @@ FLIGHT_TOOLS = [
                     "description": "Return date in YYYY-MM-DD format (optional, omit for one-way)"
                 },
                 "passengers": {
-                    "type": "integer",
-                    "description": "Number of adult passengers (default: 1)",
+                    "anyOf": [{"type": "integer"}, {"type": "string"}],
+                    "description": "Number of adult passengers as integer (default: 1)",
                     "default": 1
                 },
                 "cabin_class": {
@@ -57,91 +58,6 @@ FLIGHT_TOOLS = [
     }
 ]
 
-# Common airport codes mapping
-AIRPORT_CODES = {
-    # USA
-    "new york": "JFK",
-    "nyc": "JFK",
-    "los angeles": "LAX",
-    "la": "LAX",
-    "chicago": "ORD",
-    "san francisco": "SFO",
-    "miami": "MIA",
-    "boston": "BOS",
-    "seattle": "SEA",
-    "washington": "DCA",
-    "dc": "DCA",
-    "atlanta": "ATL",
-    "dallas": "DFW",
-    "denver": "DEN",
-    "las vegas": "LAS",
-    "orlando": "MCO",
-    "houston": "IAH",
-    "phoenix": "PHX",
-    
-    # Europe
-    "london": "LHR",
-    "paris": "CDG",
-    "rome": "FCO",
-    "amsterdam": "AMS",
-    "frankfurt": "FRA",
-    "madrid": "MAD",
-    "barcelona": "BCN",
-    "berlin": "BER",
-    "munich": "MUC",
-    "zurich": "ZRH",
-    "vienna": "VIE",
-    "dublin": "DUB",
-    "lisbon": "LIS",
-    "brussels": "BRU",
-    "milan": "MXP",
-    "athens": "ATH",
-    "prague": "PRG",
-    "copenhagen": "CPH",
-    "stockholm": "ARN",
-    "oslo": "OSL",
-    "helsinki": "HEL",
-    
-    # Asia
-    "tokyo": "NRT",
-    "osaka": "KIX",
-    "beijing": "PEK",
-    "shanghai": "PVG",
-    "hong kong": "HKG",
-    "singapore": "SIN",
-    "bangkok": "BKK",
-    "seoul": "ICN",
-    "taipei": "TPE",
-    "dubai": "DXB",
-    "mumbai": "BOM",
-    "delhi": "DEL",
-    "sydney": "SYD",
-    "melbourne": "MEL",
-    "auckland": "AKL",
-    
-    # Americas
-    "toronto": "YYZ",
-    "vancouver": "YVR",
-    "montreal": "YUL",
-    "mexico city": "MEX",
-    "cancun": "CUN",
-    "sao paulo": "GRU",
-    "rio de janeiro": "GIG",
-    "buenos aires": "EZE",
-    "lima": "LIM",
-    "bogota": "BOG",
-    
-    # Middle East & Africa
-    "tel aviv": "TLV",
-    "istanbul": "IST",
-    "cairo": "CAI",
-    "johannesburg": "JNB",
-    "cape town": "CPT",
-    "nairobi": "NBO",
-    "doha": "DOH",
-    "abu dhabi": "AUH",
-}
-
 # Initialize service
 _flight_service = FlightService()
 
@@ -163,28 +79,19 @@ def handle_flight_tool(tool_name: str, tool_input: dict) -> str:
             destination=tool_input["destination"],
             departure_date=tool_input["departure_date"],
             return_date=tool_input.get("return_date"),
-            passengers=tool_input.get("passengers", 1),
+            passengers=int(tool_input.get("passengers", 1)),
             cabin_class=tool_input.get("cabin_class", "ECONOMY")
         )
         return result.format_display()
     
     elif tool_name == "get_airport_code":
-        city = tool_input["city_or_airport"].lower().strip()
-        
-        # Direct lookup
-        if city in AIRPORT_CODES:
-            code = AIRPORT_CODES[city]
-            return f"The IATA airport code for {tool_input['city_or_airport']} is {code}"
-        
-        # Partial match
-        for key, code in AIRPORT_CODES.items():
-            if city in key or key in city:
-                return f"The IATA airport code for {tool_input['city_or_airport']} is {code}"
-        
-        # Check if it's already a code
-        if len(city) == 3 and city.isalpha():
-            return f"{city.upper()} appears to already be an IATA airport code"
-        
-        return f"Could not find airport code for '{tool_input['city_or_airport']}'. Please provide a valid city name or airport code."
+        query = tool_input["city_or_airport"]
+        match = airport_store.find_airport(query)
+        if match:
+            return (
+                f"The IATA airport code for {query} is {match['iata']} "
+                f"({match['city']}, {match['country']})"
+            )
+        return f"Could not find airport code for '{query}'. Please provide a valid city or airport name."
     
     return f"Unknown flight tool: {tool_name}"

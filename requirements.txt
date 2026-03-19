@@ -7,6 +7,9 @@ httpx>=0.27.0
 # Flight & Hotel APIs
 amadeus>=9.0.0
 
+# Vector DB for airport/city lookup
+chromadb>=0.4.0
+
 # CLI enhancements
 rich>=13.0.0
 

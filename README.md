@@ -8,7 +8,6 @@ An AI-powered travel agent that recommends flights and hotels based on your vaca
 - ✈️ Flight search and recommendations
 - 🏨 Hotel search and recommendations
 - 💡 Smart suggestions based on your preferences
-- 🛡️ Prompt injection defense — pre-screens input before it reaches the LLM
 
 ## Setup
 
@@ -65,29 +64,20 @@ Agent: I'll search for flights and hotels for your trip...
 ```
 flight-agent/
 ├── src/
-│   ├── main.py               # CLI entry point
-│   ├── agent.py              # Main agent with Groq
-│   ├── config.py             # Configuration
-│   ├── prompt_defender.py    # Prompt injection pre-screen
-│   ├── tools/                # Tool definitions
+│   ├── main.py           # CLI entry point
+│   ├── agent.py          # Main agent with Groq
+│   ├── config.py         # Configuration
+│   ├── tools/            # Tool definitions
 │   │   ├── flight_tools.py
 │   │   └── hotel_tools.py
-│   ├── services/             # API integrations
+│   ├── services/         # API integrations
 │   │   ├── flight_service.py
 │   │   └── hotel_service.py
-│   └── models/               # Data models
+│   └── models/           # Data models
 │       ├── flight.py
 │       └── hotel.py
 └── tests/
 ```
-
-## Security
-
-The agent runs a two-layer prompt injection defense:
-
-1. **Code layer** (`prompt_defender.py`) — regex scanner runs before every LLM call. Blocks role-override phrases, persona hijacking, system prompt extraction attempts, jailbreak keywords, and oversized inputs. Flagged messages are logged and deflected without touching the LLM or conversation history.
-
-2. **Prompt layer** (system prompt) — instructs the model to refuse injection attempts as a second line of defense.
 
 ## License
 

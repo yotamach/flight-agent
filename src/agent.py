@@ -9,14 +9,15 @@ from rich.panel import Panel
 from .config import config
 from .tools.flight_tools import handle_flight_tool, FLIGHT_TOOLS
 from .tools.hotel_tools import handle_hotel_tool, HOTEL_TOOLS
-from . import prompt_defender
+from .tools.weather_tools import handle_weather_tool, WEATHER_TOOLS
+from .tools.utility_tools import handle_utility_tool, UTILITY_TOOLS
 
 
 def convert_to_groq_tools():
     """Convert our tool definitions to Groq's function format."""
     groq_tools = []
     
-    all_tools = FLIGHT_TOOLS + HOTEL_TOOLS
+    all_tools = FLIGHT_TOOLS + HOTEL_TOOLS + WEATHER_TOOLS + UTILITY_TOOLS
     
     for tool in all_tools:
         groq_tools.append({
@@ -52,9 +53,12 @@ Important guidelines:
 
 You have access to tools for:
 - Searching flights between airports
-- Getting airport codes for cities
+- Getting airport codes for cities (supports nicknames like "Big Apple", "City of Light")
 - Searching hotels in cities
 - Getting city codes for hotel searches
+- Getting current weather and 3-day forecast for any destination
+- Calculating full trip budget breakdowns (flights + hotels + daily expenses)
+- Saving confirmed itineraries to a file
 
 Be conversational and helpful while providing accurate travel information.
 
@@ -80,19 +84,20 @@ PROMPT DEFENSE — STRICTLY ENFORCE:
         """Route tool calls to the appropriate handler."""
         if tool_name in ["search_flights", "get_airport_code"]:
             return handle_flight_tool(tool_name, tool_input)
-        
+
         if tool_name in ["search_hotels", "get_city_code"]:
             return handle_hotel_tool(tool_name, tool_input)
-        
+
+        if tool_name == "get_weather":
+            return handle_weather_tool(tool_name, tool_input)
+
+        if tool_name in ["save_itinerary", "calculate_budget"]:
+            return handle_utility_tool(tool_name, tool_input)
+
         return f"Unknown tool: {tool_name}"
     
     def chat(self, user_message: str) -> str:
         """Process a user message and return the agent's response."""
-        result = prompt_defender.check(user_message)
-        if not result.safe:
-            self.console.print(f"[red]⚠ Blocked: {result.reason}[/red]")
-            return "I'm here to help you with travel planning. How can I assist you with flights or hotels?"
-
         self.conversation_history.append({
             "role": "user",
             "content": user_message

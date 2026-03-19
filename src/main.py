@@ -48,7 +48,7 @@ def main():
         agent = TravelAgent()
     except Exception as e:
         console.print(f"[red]Failed to initialize agent: {e}[/red]")
-        console.print("[dim]Make sure OPENAI_API_KEY is set in your .env file.[/dim]")
+        console.print("[dim]Make sure GROQ_API_KEY is set in your .env file.[/dim]")
         return
     
     # Main conversation loop
