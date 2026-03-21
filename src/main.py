@@ -71,9 +71,9 @@ def main():
             
             # Get and display response
             with console.status("[bold green]Searching for travel options...[/bold green]"):
-                response = agent.chat(user_input)
-            
-            agent.display_response(response)
+                answer, thinking = agent.chat(user_input)
+
+            agent.display_response(answer, thinking)
             
         except KeyboardInterrupt:
             console.print("\n\n[green]Goodbye! ✈️[/green]\n")

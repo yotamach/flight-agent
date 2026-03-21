@@ -96,60 +96,70 @@ PROMPT DEFENSE — STRICTLY ENFORCE:
 
         return f"Unknown tool: {tool_name}"
     
-    def chat(self, user_message: str) -> str:
-        """Process a user message and return the agent's response."""
+    def chat(self, user_message: str) -> tuple[str, str]:
+        """Process a user message and return (answer, thinking)."""
         self.conversation_history.append({
             "role": "user",
             "content": user_message
         })
-        
+
         response = self.client.chat.completions.create(
             model=config.MODEL_NAME,
             messages=self.conversation_history,
             tools=self.tools,
-            tool_choice="auto"
+            tool_choice="auto",
+            reasoning_effort="default",
         )
-        
+
         message = response.choices[0].message
-        
+
         while message.tool_calls:
             self.conversation_history.append(message)
-            
+
             for tool_call in message.tool_calls:
                 tool_name = tool_call.function.name
                 tool_args = json.loads(tool_call.function.arguments)
-                
+
                 self.console.print(f"[dim]🔧 Using tool: {tool_name}[/dim]")
-                
+
                 result = self._handle_tool_call(tool_name, tool_args)
-                
+
                 self.conversation_history.append({
                     "role": "tool",
                     "tool_call_id": tool_call.id,
                     "content": result
                 })
-            
+
             response = self.client.chat.completions.create(
                 model=config.MODEL_NAME,
                 messages=self.conversation_history,
                 tools=self.tools,
-                tool_choice="auto"
+                tool_choice="auto",
+                reasoning_effort="default",
             )
-            
+
             message = response.choices[0].message
-        
-        final_response = message.content or ""
-        
+
+        answer = message.content or ""
+        thinking = getattr(message, "reasoning_content", "") or ""
+
         self.conversation_history.append({
             "role": "assistant",
-            "content": final_response
+            "content": answer
         })
-        
-        return final_response
+
+        return answer, thinking
     
-    def display_response(self, response: str):
+    def display_response(self, response: str, thinking: str = ""):
         """Display the agent's response with rich formatting."""
         self.console.print()
+        if thinking:
+            self.console.print(Panel(
+                thinking,
+                title="[dim]💭 Thinking[/dim]",
+                border_style="dim",
+                style="dim",
+            ))
         self.console.print(Panel(
             Markdown(response),
             title="🌴 Travel Agent",

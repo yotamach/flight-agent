@@ -7,9 +7,9 @@ Semantic search means queries like "Big Apple", "City of Light", or even
 misspellings will resolve to the correct IATA codes.
 """
 
-import os
 import chromadb
 from chromadb.utils import embedding_functions
+from ..config import config
 
 # ---------------------------------------------------------------------------
 # Airport data — each entry's 'doc' is the text that gets embedded.
@@ -283,7 +283,6 @@ AIRPORT_DATA = [
 # Singleton store
 # ---------------------------------------------------------------------------
 _COLLECTION_NAME = "airports"
-_DB_PATH = os.path.join(os.path.dirname(__file__), "..", "..", ".chroma_db")
 _store = None
 
 
@@ -292,8 +291,7 @@ def _get_store():
     if _store is not None:
         return _store
 
-    db_path = os.path.abspath(_DB_PATH)
-    client = chromadb.PersistentClient(path=db_path)
+    client = chromadb.HttpClient(host=config.CHROMA_HOST, port=config.CHROMA_PORT)
 
     # Use ChromaDB's built-in default embedding function
     ef = embedding_functions.DefaultEmbeddingFunction()

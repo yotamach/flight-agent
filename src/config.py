@@ -18,8 +18,12 @@ class Config:
     AMADEUS_CLIENT_SECRET: str = os.getenv("AMADEUS_CLIENT_SECRET", "")
     AMADEUS_HOSTNAME: str = os.getenv("AMADEUS_HOSTNAME", "test")
     
+    # ChromaDB
+    CHROMA_HOST: str = os.getenv("CHROMA_HOST", "localhost")
+    CHROMA_PORT: int = int(os.getenv("CHROMA_PORT", "8000"))
+
     # Agent settings
-    MODEL_NAME: str = "llama-3.3-70b-versatile"
+    MODEL_NAME: str = "qwen/qwen3-32b"
     
     @classmethod
     def validate(cls) -> list[str]:
